@@ -18,14 +18,10 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     buffer.value = params[1];
 
     buffers->push_back(buffer);
-
-    std::cout << "Wrote new buffer into memory" << std::endl;
   } else if (op == VirtualMachineInstructionType::REGWRITE) {
     int slot = std::stoi(params[0]);
 
     registers->at(slot).writeRegisterValue(params[1]);
-
-    std::cout << "Wrote register value" << std::endl;
   } else if (op == VirtualMachineInstructionType::REGCPYTOBUF) {
     int registerSlot = std::stoi(params[0]);
     int bufferSlot = std::stoi(params[1]);
@@ -43,8 +39,6 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     } else {
       buffers->at(bufferSlot).value = registers->at(registerSlot).value;
     }
-
-    std::cout << "Copied register value to buffer" << std::endl;
   } else if (op == VirtualMachineInstructionType::BUFCPYTOREG) {
     int bufferSlot = std::stoi(params[0]);
     int registerSlot = std::stoi(params[1]);
@@ -55,9 +49,6 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
 
     registers->at(registerSlot)
         .writeRegisterValue(buffers->at(bufferSlot).value);
-
-    std::cout << "Copied buffer value to register" << std::endl;
-
   } else if (op == VirtualMachineInstructionType::GOTOSECTOR) {
     // sectors->at(std::stoi(params[0]));
     VirtualMachineInstructionResult result{};
@@ -164,12 +155,12 @@ int main() {
   }
 
   std::cout << "---------------- PROGRAM OUTPUT ----------------" << std::endl;
-  std::cout << "VirtualMachineDebug:" << std::endl;
-  std::cout << "Graphite Language Virtual Machine v1.0" << std::endl;
-  std::cout << "Found a total of " << totalInstructionCount
-            << " VM instructions" << std::endl;
-  std::cout << "Found a total of " << sectors.size() << " program sectors"
-            << std::endl;
+//  std::cout << "VirtualMachineDebug:" << std::endl;
+//  std::cout << "Graphite Language Virtual Machine v1.0" << std::endl;
+//  std::cout << "Found a total of " << totalInstructionCount
+//            << " VM instructions" << std::endl;
+  // std::cout << "Found a total of " << sectors.size() << " program sectors"
+            // << std::endl;
 
   // Execute sector 0
 

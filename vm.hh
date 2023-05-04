@@ -87,7 +87,6 @@ struct VirtualMachineSector {
             VirtualMachineInstructionResult result = instruction.execute(registers, buffers);
 
             if (result.gotoSector){
-                std::cout << "Entering sector " << result.sectorId << std::endl;
                 sectors->at(result.sectorId).execute(registers, buffers, sectors);
             }
         }
