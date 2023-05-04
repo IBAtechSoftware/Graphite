@@ -50,7 +50,6 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     registers->at(registerSlot)
         .writeRegisterValue(buffers->at(bufferSlot).value);
   } else if (op == VirtualMachineInstructionType::GOTOSECTOR) {
-    // sectors->at(std::stoi(params[0]));
     VirtualMachineInstructionResult result{};
     result.gotoSector = true;
     result.sectorId = std::stoi(params[0]);
@@ -108,6 +107,7 @@ VirtualMachineInstruction parseInstruction(std::string instructionLine) {
 int main() {
   std::vector<VirtualMachineSector> sectors;     // Program sectors
   std::vector<VirtualMachineBuffer> buffers;     // Program memory
+  std::vector<VirtualMachineBuffer> tmpBuffers; // Temporary machine memory, program copies result from these into program memory
   std::vector<VirtualMachineRegister> registers; // Machine memory
 
   std::cout << "Creating VM registers" << std::endl;

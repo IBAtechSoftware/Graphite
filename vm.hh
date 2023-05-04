@@ -26,6 +26,28 @@ void ltrim(std::string &s) {
           }));
 }
 
+/*
+    Statement is structured like:
+    $ <-- Indicates that the parser should eval the statement located after the $
+    [#, @] <-- Indicates what type the statement is, the pound symbol is for buffer access, the @ symbol is for register access
+    [statement] <-- Register or Buffer slot
+    $ <-- End the special statement
+*/
+static std::string evalSpecialStatement(std::string statement){
+    statement.pop_back(); // Remove the last character
+
+    if (statement[0] == '$'){
+        if (statement[1] == '#') {
+            statement.erase(0, 2);
+        } else if (statement[1] == '@'){
+            statement.erase(0, 2);
+        }
+    } else {
+        // Statement cannot be evaluated
+        return statement;
+    }
+}
+
 // Represents a single register slot in the VM
 // Each VirtualMachineRegister is only identifiable by its register slot
 struct VirtualMachineRegister {
@@ -35,7 +57,6 @@ struct VirtualMachineRegister {
    void writeRegisterValue(std::string v){
     value = v;
 
-    // TODO: Handle register write
     switch (slot){
         case 0:
             std::cout << value << std::endl;

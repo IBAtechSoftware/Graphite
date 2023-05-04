@@ -1,2 +1,2 @@
 buildVm:
-	g++ ./vm.cc -o ./vm
+	g++ ./vm.cc -g -o ./vm

@@ -8,3 +8,6 @@ Registers are a way for a program to access virtual machine APIs, such as the fi
 
 ### Buffers
 Buffers are a way for a program to keep track of data. Buffers are program managed by the program, and can be created with the ```BUFWRITE``` command.
+
+### Temp Buffers
+Temp Buffers are a way for the machine to write temporary values into memory, the program can then copy the temporary value into a program managed buffer.
