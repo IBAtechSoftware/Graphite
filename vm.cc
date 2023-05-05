@@ -17,7 +17,7 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
 
     VirtualMachineBuffer buffer{};
     buffer.slot = slot;
-    buffer.value = params[1];
+    buffer.value = evalSpecialStatement(params[1], buffers, registers);
 
     buffers->push_back(buffer);
   } else if (op == VirtualMachineInstructionType::REGWRITE) {
@@ -70,6 +70,36 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     VirtualMachineBuffer buffer{};
     buffer.slot = tmpBuffers->capacity();
     buffer.value = std::to_string(num1 + num2);
+
+    tmpBuffers->push_back(
+        buffer); // Write the new temporary buffer into garbage collected memory
+  } else if (op == VirtualMachineInstructionType::SUB) {
+    int num1 = std::stoi(evalSpecialStatement(params[0], buffers, registers));
+    int num2 = std::stoi(evalSpecialStatement(params[1], buffers, registers));
+
+    VirtualMachineBuffer buffer{};
+    buffer.slot = tmpBuffers->capacity();
+    buffer.value = std::to_string(num1 - num2);
+
+    tmpBuffers->push_back(
+        buffer); // Write the new temporary buffer into garbage collected memory
+  } else if (op == VirtualMachineInstructionType::MUL) {
+    int num1 = std::stoi(evalSpecialStatement(params[0], buffers, registers));
+    int num2 = std::stoi(evalSpecialStatement(params[1], buffers, registers));
+
+    VirtualMachineBuffer buffer{};
+    buffer.slot = tmpBuffers->capacity();
+    buffer.value = std::to_string(num1 * num2);
+
+    tmpBuffers->push_back(
+        buffer); // Write the new temporary buffer into garbage collected memory
+  } else if (op == VirtualMachineInstructionType::DIV) {
+    int num1 = std::stoi(evalSpecialStatement(params[0], buffers, registers));
+    int num2 = std::stoi(evalSpecialStatement(params[1], buffers, registers));
+
+    VirtualMachineBuffer buffer{};
+    buffer.slot = tmpBuffers->capacity();
+    buffer.value = std::to_string(num1 / num2);
 
     tmpBuffers->push_back(
         buffer); // Write the new temporary buffer into garbage collected memory
@@ -176,6 +206,8 @@ int main(int argc, char *argv[]) {
   std::cout << "Creating VM registers" << std::endl;
 
   registers.push_back(VirtualMachineRegister{0});
+  registers.push_back(VirtualMachineRegister{1});
+  registers.push_back(VirtualMachineRegister{2});
 
   std::cout << "Loading bytecode from disk" << std::endl;
 

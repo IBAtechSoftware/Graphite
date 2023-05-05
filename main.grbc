@@ -1,12 +1,5 @@
 #-#
-BUFWRITE-0,9
-BUFWRITE-1,3
-ADD-$#0$,$#1$
-TMPBUFCPY-_last_,2
-ADD-$#2$,45
-TMPBUFCPY-_last_,3
-TMPBUFRM-_last_
-REGWRITE-0,The output of 9 + 3 + 45 is:
-REGCPYTOBUF-0,4
-REGWRITE-0,$#3$
+REGWRITE-2,read
+REGCPYTOBUF-2,0
+REGWRITE-0,$#0$
 #-#

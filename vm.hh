@@ -36,8 +36,14 @@ struct VirtualMachineRegister {
     value = v;
 
     switch (slot) {
-    case 0:
+    case 0: // Slot 0: STDOUT with newline
       std::cout << value << std::endl;
+    case 1: // Slot 1: STDOUT WITHOUT a newline
+      std::cout << value;
+    case 2: // Slot 2: STDIN
+      std::string input;
+      std::cin >> input;
+      value = input;
     }
   }
 
