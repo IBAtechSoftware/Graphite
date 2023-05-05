@@ -37,7 +37,7 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     // Check if the buffer slot exists, if not, create it
     if (bufferSlot >= buffers->size()) {
       VirtualMachineBuffer buffer{};
-      buffer.slot = buffers->size() + 1;
+      buffer.slot = bufferSlot;
       buffer.value = registers->at(registerSlot).readRegisterValue();
 
       buffers->push_back(buffer);
