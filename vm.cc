@@ -1,4 +1,5 @@
 #include "vm.hh"
+#include "txttable.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -8,10 +9,11 @@
 // Represents a single instruction given to the VM
 VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     std::vector<VirtualMachineRegister> *registers,
-    std::vector<VirtualMachineBuffer> *buffers) {
+    std::vector<VirtualMachineBuffer> *buffers,
+    std::vector<VirtualMachineBuffer> *tmpBuffers) {
   if (op == VirtualMachineInstructionType::BUFWRITE) {
 
-    int slot = std::stoi(params[0]);
+    int slot = std::stoi(evalSpecialStatement(params[0], buffers, registers));
 
     VirtualMachineBuffer buffer{};
     buffer.slot = slot;
@@ -19,12 +21,15 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
 
     buffers->push_back(buffer);
   } else if (op == VirtualMachineInstructionType::REGWRITE) {
-    int slot = std::stoi(params[0]);
+    int slot = std::stoi(evalSpecialStatement(params[0], buffers, registers));
 
-    registers->at(slot).writeRegisterValue(params[1]);
+    registers->at(slot).writeRegisterValue(
+        evalSpecialStatement(params[1], buffers, registers));
   } else if (op == VirtualMachineInstructionType::REGCPYTOBUF) {
-    int registerSlot = std::stoi(params[0]);
-    int bufferSlot = std::stoi(params[1]);
+    int registerSlot =
+        std::stoi(evalSpecialStatement(params[0], buffers, registers));
+    int bufferSlot =
+        std::stoi(evalSpecialStatement(params[1], buffers, registers));
 
     // Copy the contents of the register into the buffer
     // Overwrites the contents of the buffer, with the value of the register
@@ -40,8 +45,10 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
       buffers->at(bufferSlot).value = registers->at(registerSlot).value;
     }
   } else if (op == VirtualMachineInstructionType::BUFCPYTOREG) {
-    int bufferSlot = std::stoi(params[0]);
-    int registerSlot = std::stoi(params[1]);
+    int bufferSlot =
+        std::stoi(evalSpecialStatement(params[0], buffers, registers));
+    int registerSlot =
+        std::stoi(evalSpecialStatement(params[1], buffers, registers));
 
     if (bufferSlot >= buffers->size()) {
       throw std::runtime_error("Invalid buffer slot for copy");
@@ -52,10 +59,44 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
   } else if (op == VirtualMachineInstructionType::GOTOSECTOR) {
     VirtualMachineInstructionResult result{};
     result.gotoSector = true;
-    result.sectorId = std::stoi(params[0]);
+    result.sectorId =
+        std::stoi(evalSpecialStatement(params[0], buffers, registers));
 
     return result;
+  } else if (op == VirtualMachineInstructionType::ADD) {
+    int num1 = std::stoi(evalSpecialStatement(params[0], buffers, registers));
+    int num2 = std::stoi(evalSpecialStatement(params[1], buffers, registers));
+
+    VirtualMachineBuffer buffer{};
+    buffer.slot = tmpBuffers->size() - 1;
+    buffer.value = std::to_string(num1 + num2);
+
+    tmpBuffers->push_back(
+        buffer); // Write the new temporary buffer into garbage collected memory
+  } else if (op == VirtualMachineInstructionType::TMPBUFCPY) {
+
+    // _last_ transforms into the slot of the last buffer inserted into
+    // temporary memory
+    if (params[0] == "_last_") {
+      params[0] = std::to_string(tmpBuffers->size() - 1);
+    }
+
+    int tmpBufSlot = std::stoi(params[0]);
+    int bufferSlot = std::stoi(params[1]);
+
+    if (bufferSlot >= buffers->size()) {
+      // The buffer does not exist, create it
+      VirtualMachineBuffer targetBuffer{};
+      targetBuffer.slot = bufferSlot;
+      targetBuffer.value = tmpBuffers->at(tmpBufSlot).value;
+
+      buffers->push_back(targetBuffer);
+    } else {
+      // Buffer exists, overwrite the value
+      buffers->at(bufferSlot).value = tmpBuffers->at(tmpBufSlot).value;
+    }
   }
+
   VirtualMachineInstructionResult result{};
   result.gotoSector = false;
 
@@ -104,10 +145,23 @@ VirtualMachineInstruction parseInstruction(std::string instructionLine) {
   return instruction;
 }
 
-int main() {
-  std::vector<VirtualMachineSector> sectors;     // Program sectors
-  std::vector<VirtualMachineBuffer> buffers;     // Program memory
-  std::vector<VirtualMachineBuffer> tmpBuffers; // Temporary machine memory, program copies result from these into program memory
+int main(int argc, char *argv[]) {
+
+  bool virtualMachineDebugOutput = false;
+
+  for (int i = 0; i < argc; i++){
+    std::string arg = std::string(argv[i]);
+
+    if (arg == "--virtual-machine-enable-debug-output"){
+      virtualMachineDebugOutput = true;
+    }
+  }
+
+  std::vector<VirtualMachineSector> sectors; // Program sectors
+  std::vector<VirtualMachineBuffer> buffers; // Program memory
+  std::vector<VirtualMachineBuffer>
+      tmpBuffers; // Temporary machine memory, program copies result from these
+                  // into program memory
   std::vector<VirtualMachineRegister> registers; // Machine memory
 
   std::cout << "Creating VM registers" << std::endl;
@@ -155,14 +209,51 @@ int main() {
   }
 
   std::cout << "---------------- PROGRAM OUTPUT ----------------" << std::endl;
-//  std::cout << "VirtualMachineDebug:" << std::endl;
-//  std::cout << "Graphite Language Virtual Machine v1.0" << std::endl;
-//  std::cout << "Found a total of " << totalInstructionCount
-//            << " VM instructions" << std::endl;
+  //  std::cout << "VirtualMachineDebug:" << std::endl;
+  //  std::cout << "Graphite Language Virtual Machine v1.0" << std::endl;
+  //  std::cout << "Found a total of " << totalInstructionCount
+  //            << " VM instructions" << std::endl;
   // std::cout << "Found a total of " << sectors.size() << " program sectors"
-            // << std::endl;
+  // << std::endl;
 
   // Execute sector 0
 
-  sectors.at(0).execute(&registers, &buffers, &sectors);
+  sectors.at(0).execute(&registers, &buffers, &sectors, &tmpBuffers);
+
+  if (virtualMachineDebugOutput) {
+    // Render tables
+    std::cout << "---------------- PROGRAM RESULT ----------------"
+              << std::endl;
+
+    std::cout << "--- BUFFERS ---" << std::endl;
+    TextTable t('-', '|', '+');
+    t.add("Slot");
+    t.add("Value");
+    t.endOfRow();
+
+    for (auto buffer : buffers) {
+      t.add(std::to_string(buffer.slot));
+      t.add(buffer.value);
+      t.endOfRow();
+    }
+
+    t.setAlignment(2, TextTable::Alignment::RIGHT);
+    std::cout << t;
+
+    TextTable rt('-', '|', '+');
+
+    rt.add("slot");
+    rt.add("value");
+    rt.endOfRow();
+
+    for (auto mRegister : registers) {
+      rt.add(std::to_string(mRegister.slot));
+      rt.add(mRegister.value);
+      rt.endOfRow();
+    }
+    rt.setAlignment(2, TextTable::Alignment::RIGHT);
+
+    std::cout << "--- REGISTERS ---" << std::endl;
+    std::cout << rt;
+  }
 }

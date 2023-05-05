@@ -1,8 +1,8 @@
 #pragma once
-#include <vector>
-#include <string>
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <vector>
 
 static std::vector<std::string> split(std::string s, std::string delimiter) {
   size_t pos_start = 0, pos_end, delim_len = delimiter.length();
@@ -26,90 +26,100 @@ void ltrim(std::string &s) {
           }));
 }
 
-/*
-    Statement is structured like:
-    $ <-- Indicates that the parser should eval the statement located after the $
-    [#, @] <-- Indicates what type the statement is, the pound symbol is for buffer access, the @ symbol is for register access
-    [statement] <-- Register or Buffer slot
-    $ <-- End the special statement
-*/
-static std::string evalSpecialStatement(std::string statement){
-    statement.pop_back(); // Remove the last character
-
-    if (statement[0] == '$'){
-        if (statement[1] == '#') {
-            statement.erase(0, 2);
-        } else if (statement[1] == '@'){
-            statement.erase(0, 2);
-        }
-    } else {
-        // Statement cannot be evaluated
-        return statement;
-    }
-}
-
 // Represents a single register slot in the VM
 // Each VirtualMachineRegister is only identifiable by its register slot
 struct VirtualMachineRegister {
-   int slot; 
-   std::string value;
+  int slot;
+  std::string value;
 
-   void writeRegisterValue(std::string v){
+  void writeRegisterValue(std::string v) {
     value = v;
 
-    switch (slot){
-        case 0:
-            std::cout << value << std::endl;
+    switch (slot) {
+    case 0:
+      std::cout << value << std::endl;
     }
-   }
+  }
 
-   std::string readRegisterValue(){
-    return value;
-   }
+  std::string readRegisterValue() { return value; }
 };
 
 enum VirtualMachineInstructionType {
-    BUFWRITE = 0,
-    REGWRITE = 1,
-    REGCPYTOBUF = 2,
-    BUFCPYTOREG = 3,
-    GOTOSECTOR = 4,
-    ADD = 5,
-    SUB = 6,
-    DIV = 7,
-    MUL = 8,
-    TMPBUFCPY = 9,
-    TMPBUFRM = 10
+  BUFWRITE = 0,
+  REGWRITE = 1,
+  REGCPYTOBUF = 2,
+  BUFCPYTOREG = 3,
+  GOTOSECTOR = 4,
+  ADD = 5,
+  SUB = 6,
+  DIV = 7,
+  MUL = 8,
+  TMPBUFCPY = 9,
+  TMPBUFRM = 10
 };
 
 struct VirtualMachineInstructionResult {
-    bool gotoSector = false;
-    int sectorId = -1;
+  bool gotoSector = false;
+  int sectorId = -1;
 };
 
 struct VirtualMachineBuffer {
-    int slot;
-    std::string value;
+  int slot;
+  std::string value;
 };
 
 struct VirtualMachineInstruction {
-    int op;
-    std::vector<std::string> params;
+  int op;
+  std::vector<std::string> params;
 
-    VirtualMachineInstructionResult execute(std::vector<VirtualMachineRegister> *registers, std::vector<VirtualMachineBuffer> *buffers);
+  VirtualMachineInstructionResult
+  execute(std::vector<VirtualMachineRegister> *registers,
+          std::vector<VirtualMachineBuffer> *buffers, std::vector<VirtualMachineBuffer> *tmpBuffers);
 };
 
 struct VirtualMachineSector {
-    int sectorId;
-    std::vector<VirtualMachineInstruction> instructions;
+  int sectorId;
+  std::vector<VirtualMachineInstruction> instructions;
 
-    void execute(std::vector<VirtualMachineRegister> *registers, std::vector<VirtualMachineBuffer> *buffers, std::vector<VirtualMachineSector> *sectors){
-        for (VirtualMachineInstruction instruction : instructions){
-            VirtualMachineInstructionResult result = instruction.execute(registers, buffers);
+  void execute(std::vector<VirtualMachineRegister> *registers,
+               std::vector<VirtualMachineBuffer> *buffers,
+               std::vector<VirtualMachineSector> *sectors, std::vector<VirtualMachineBuffer> *tmpBuffers) {
+    for (VirtualMachineInstruction instruction : instructions) {
+      VirtualMachineInstructionResult result =
+          instruction.execute(registers, buffers, tmpBuffers);
 
-            if (result.gotoSector){
-                sectors->at(result.sectorId).execute(registers, buffers, sectors);
-            }
-        }
+      if (result.gotoSector) {
+        sectors->at(result.sectorId).execute(registers, buffers, sectors, tmpBuffers);
+      }
     }
+  }
 };
+
+/*
+    Statement is structured like:
+    $ <-- Indicates that the parser should eval the statement located after the
+   $
+    [#, @] <-- Indicates what type the statement is, the # symbol is for
+   buffer access, the @ symbol is for register access [statement] <-- Register
+   or Buffer slot $ <-- End the special statement
+*/
+static std::string evalSpecialStatement(std::string statement, std::vector<VirtualMachineBuffer> *buffers, std::vector<VirtualMachineRegister> *registers) {
+
+  if (statement[0] == '$') {
+    statement.pop_back(); // Remove the last character
+
+    if (statement[1] == '#') {
+      statement.erase(0, 2);
+
+      return buffers->at(std::stoi(statement)).value;
+    } else if (statement[1] == '@') {
+      statement.erase(0, 2);
+      return registers->at(std::stoi(statement)).readRegisterValue();
+    } else {
+      throw std::runtime_error("Invalid special statement modifier");
+    }
+  } else {
+    // Statement cannot be evaluated
+    return statement;
+  }
+}

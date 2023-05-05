@@ -1,4 +1,7 @@
 #-#
-REGWRITE-0,Hello World
-GOTOSECTOR-0
+BUFWRITE-0,9
+BUFWRITE-1,3
+ADD-$#0$,$#1$
+TMPBUFCPY-_last_,2
+REGWRITE-0,$#2$
 #-#
