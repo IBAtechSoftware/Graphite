@@ -20,7 +20,7 @@ static std::vector<std::string> split(std::string s, std::string delimiter) {
 }
 
 // Functions
-void ltrim(std::string &s) {
+static void ltrim(std::string &s) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
             return !std::isspace(ch);
           }));

@@ -68,7 +68,7 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     int num2 = std::stoi(evalSpecialStatement(params[1], buffers, registers));
 
     VirtualMachineBuffer buffer{};
-    buffer.slot = tmpBuffers->size() - 1;
+    buffer.slot = tmpBuffers->capacity();
     buffer.value = std::to_string(num1 + num2);
 
     tmpBuffers->push_back(
@@ -95,6 +95,15 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
       // Buffer exists, overwrite the value
       buffers->at(bufferSlot).value = tmpBuffers->at(tmpBufSlot).value;
     }
+  } else if (op == VirtualMachineInstructionType::TMPBUFRM) {
+    if (params[0] == "_last_") {
+      params[0] = std::to_string(tmpBuffers->size() - 1);
+    }
+
+    int tmpBufferSlot =
+        std::stoi(evalSpecialStatement(params[0], buffers, registers));
+
+    tmpBuffers->erase(tmpBuffers->begin() + tmpBufferSlot);
   }
 
   VirtualMachineInstructionResult result{};
@@ -149,10 +158,10 @@ int main(int argc, char *argv[]) {
 
   bool virtualMachineDebugOutput = false;
 
-  for (int i = 0; i < argc; i++){
+  for (int i = 0; i < argc; i++) {
     std::string arg = std::string(argv[i]);
 
-    if (arg == "--virtual-machine-enable-debug-output"){
+    if (arg == "--virtual-machine-enable-debug-output") {
       virtualMachineDebugOutput = true;
     }
   }
@@ -255,5 +264,21 @@ int main(int argc, char *argv[]) {
 
     std::cout << "--- REGISTERS ---" << std::endl;
     std::cout << rt;
+
+    TextTable tt('-', '|', '+');
+    tt.add("slot");
+    tt.add("value");
+    tt.endOfRow();
+
+    for (auto tmpBuffer : tmpBuffers) {
+      tt.add(std::to_string(tmpBuffer.slot));
+      tt.add(tmpBuffer.value);
+      tt.endOfRow();
+    }
+
+    tt.setAlignment(2, TextTable::Alignment::RIGHT);
+
+    std::cout << "--- TEMPORARY BUFFER MEMORY ---" << std::endl;
+    std::cout << tt;
   }
 }
