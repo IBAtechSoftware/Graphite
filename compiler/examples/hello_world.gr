@@ -1,0 +1,3 @@
+(importStd io)
+
+(print "test")
