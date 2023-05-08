@@ -1,0 +1,5 @@
+(function print::[message])
+-- Function content
+(regwrite 0,$message)
+
+(endfunction print)
