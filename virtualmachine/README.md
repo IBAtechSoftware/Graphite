@@ -1,4 +1,4 @@
-# Graphite
+# GraphiteVirtualMachine
 Language Virtual Machine which can run graphite bytecode
 
 ## Key concepts

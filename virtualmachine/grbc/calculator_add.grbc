@@ -1,0 +1,12 @@
+#-#
+REGWRITE-0,Enter first number:
+REGWRITE-2,read
+REGCPYTOBUF-2,0
+REGWRITE-0,Enter second number:
+REGWRITE-2,read
+REGCPYTOBUF-2,1
+REGWRITE-1,= 
+ADD-$#0$,$#1$
+TMPBUFCPY-_last_,2
+REGWRITE-0,$#2$
+#-#

@@ -187,8 +187,20 @@ VirtualMachineInstruction parseInstruction(std::string instructionLine) {
 int main(int argc, char *argv[]) {
 
   bool virtualMachineDebugOutput = false;
+  std::string virtualMachineBytecodeFile = "";
 
-  for (int i = 0; i < argc; i++) {
+  if (argc == 1){
+    std::cout << "Graphite virtual machine v1.0" << std::endl;
+    std::cout << "Author: Interfiber <webmaster@interfiber.dev>" << std::endl;
+    std::cout << "Syntax: " << argv[0] << " FILE OPTIONS" << std::endl;
+    std::cout << "Options: " << std::endl;
+    std::cout << "--virtual-machine-enable-debug-output  Enable debug output at the end of program execution" << std::endl;
+    std::exit(-1);
+  } else {
+    virtualMachineBytecodeFile = std::string(argv[1]);
+  }
+
+  for (int i = 1; i < argc; i++) {
     std::string arg = std::string(argv[i]);
 
     if (arg == "--virtual-machine-enable-debug-output") {
@@ -203,19 +215,13 @@ int main(int argc, char *argv[]) {
                   // into program memory
   std::vector<VirtualMachineRegister> registers; // Machine memory
 
-  std::cout << "Creating VM registers" << std::endl;
-
   registers.push_back(VirtualMachineRegister{0});
   registers.push_back(VirtualMachineRegister{1});
   registers.push_back(VirtualMachineRegister{2});
 
-  std::cout << "Loading bytecode from disk" << std::endl;
-
-  std::ifstream ifs("main.grbc");
+  std::ifstream ifs(virtualMachineBytecodeFile);
 
   std::string line;
-
-  std::cout << "Compiling bytecode into sectors" << std::endl;
 
   // Load all sectors into memory
   bool inSector = false;
@@ -241,15 +247,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::cout << "Compiled application, executing" << std::endl;
-
   int totalInstructionCount = 0;
 
   for (auto sector : sectors) {
     totalInstructionCount += sector.instructions.size();
   }
 
-  std::cout << "---------------- PROGRAM OUTPUT ----------------" << std::endl;
   //  std::cout << "VirtualMachineDebug:" << std::endl;
   //  std::cout << "Graphite Language Virtual Machine v1.0" << std::endl;
   //  std::cout << "Found a total of " << totalInstructionCount

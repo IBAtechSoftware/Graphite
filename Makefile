@@ -1,2 +1,3 @@
 buildVm:
-	g++ ./vm.cc -g -o ./grvm
+	mkdir -p bin
+	g++ ./virtualmachine/src/vm.cc -g -o ./bin/grvm

@@ -1,5 +1,0 @@
-#-#
-REGWRITE-2,read
-REGCPYTOBUF-2,0
-REGWRITE-0,$#0$
-#-#
