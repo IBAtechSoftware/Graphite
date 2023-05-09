@@ -413,7 +413,8 @@ local fullCode = ""
 
 print(serpent.line(sectors))
 
-for _, sector in pairs(sectors) do
+for i=0,#sectors,1 do
+    local sector = sectors[i]
     local fullSectorCode = "#-#\n"
     for _, contentLine in pairs(sector.sectorContent) do
         fullSectorCode = fullSectorCode .. contentLine .. "\n"
