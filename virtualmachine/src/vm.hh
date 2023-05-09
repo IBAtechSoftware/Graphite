@@ -66,12 +66,15 @@ enum VirtualMachineInstructionType {
   TMPBUFRM = 10, // Temporary buffer remove
   WABWRITE = 11, // Write ahead buffer write
   WABRM = 12, // Write ahead buffer remove
+  WABCPYTOBUF = 13, // Write ahead buffer copy to program memory
 };
 
 struct VirtualMachineInstructionResult {
   bool gotoSector = false;
   bool writeAheadToBuffer = false;
+  bool writeAheadBufferCopy = false;
   int writeAheadBufferId = -1;
+  int writeAheadBufferCopyId = -1;
   std::string writeAheadBufferContent = "";
   int sectorId = -1;
 };
@@ -110,6 +113,14 @@ struct VirtualMachineSector {
         buffer.value = result.writeAheadBufferContent;
 
         sectors->at(result.sectorId).writeAheadBuffers.push_back(buffer);
+      } else if (result.writeAheadBufferCopy) {
+        VirtualMachineBuffer writeAheadBuffer = sectors->at(sectorId).writeAheadBuffers.at(result.writeAheadBufferId);
+
+        VirtualMachineBuffer copyBuffer{};
+        copyBuffer.slot = result.writeAheadBufferCopyId;
+        copyBuffer.value = writeAheadBuffer.value;
+
+        buffers->push_back(copyBuffer);
       }
     }
   }

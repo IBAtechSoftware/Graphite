@@ -138,9 +138,18 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
     VirtualMachineInstructionResult result{};
     result.gotoSector = false;
     result.writeAheadToBuffer = true;
-    result.writeAheadBufferId = std::stoi(params[0]);
+    result.writeAheadBufferContent = params[2];
+    result.writeAheadBufferId = std::stoi(params[1]);
+    result.sectorId = std::stoi(params[0]);
 
     return result;
+  } else if (op == WABCPYTOBUF){
+    VirtualMachineInstructionResult result{};
+    result.writeAheadBufferCopy = true;
+    result.writeAheadBufferId = std::stoi(params[0]);
+    result.writeAheadBufferCopyId = std::stoi(params[1]);
+
+    return result; 
   }
 
   VirtualMachineInstructionResult result{};
@@ -176,6 +185,8 @@ VirtualMachineInstructionType instructionNameToType(std::string name) {
     return WABWRITE;
   } else if (name == "WABRM") {
     return WABRM;
+  } else if (name == "WABCPYTOBUF") {
+    return WABCPYTOBUF;
   } else {
     throw std::runtime_error("Invalid instruction name: " + name);
   }
@@ -244,7 +255,7 @@ int main(int argc, char *argv[]) {
     ltrim(line); // Remove indents, if they exist
 
     if (line == "#-#" && !inSector) {
-      sector = VirtualMachineSector{sectorId, {}};
+      sector = VirtualMachineSector{sectorId, {}, {}};
       inSector = true;
 
     } else if (line == "#-#" && inSector) {
