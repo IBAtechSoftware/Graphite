@@ -388,11 +388,14 @@ for line in _G["importedCodeString"]:gmatch("([^\n]*)\n?") do
         
         -- Generate buffers
 
+        local writeAheadBufferId = 0
         for _, param in pairs(functionParams) do
             -- Write Ahead Buffer allows writing into sector specific memory
             local writeAheadBuffer = {
-                bufferSlot = bufferId + 1
+                bufferSlot = writeAheadBufferId
             }
+
+            writeAheadBufferId = writeAheadBufferId + 1
         end
         
 

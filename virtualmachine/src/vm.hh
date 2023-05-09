@@ -107,6 +107,7 @@ struct VirtualMachineSector {
 
       if (result.gotoSector) {
         sectors->at(result.sectorId).execute(registers, buffers, sectors, tmpBuffers);
+        sectors->at(result.sectorId).writeAheadBuffers.clear(); // Write ahead buffers are cleared after a GOTOSECTOR call
       } else if (result.writeAheadToBuffer){
         VirtualMachineBuffer buffer{};
         buffer.slot = result.writeAheadBufferId;
