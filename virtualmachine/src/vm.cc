@@ -134,6 +134,13 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
         std::stoi(evalSpecialStatement(params[0], buffers, registers));
 
     tmpBuffers->erase(tmpBuffers->begin() + tmpBufferSlot);
+  } else if (op == VirtualMachineInstructionType::WABWRITE) {
+    VirtualMachineInstructionResult result{};
+    result.gotoSector = false;
+    result.writeAheadToBuffer = true;
+    result.writeAheadBufferId = std::stoi(params[0]);
+
+    return result;
   }
 
   VirtualMachineInstructionResult result{};
@@ -165,6 +172,10 @@ VirtualMachineInstructionType instructionNameToType(std::string name) {
     return TMPBUFCPY;
   } else if (name == "TMPBUFRM") {
     return TMPBUFRM;
+  } else if (name == "WABWRITE") {
+    return WABWRITE;
+  } else if (name == "WABRM") {
+    return WABRM;
   } else {
     throw std::runtime_error("Invalid instruction name: " + name);
   }
@@ -189,12 +200,14 @@ int main(int argc, char *argv[]) {
   bool virtualMachineDebugOutput = false;
   std::string virtualMachineBytecodeFile = "";
 
-  if (argc == 1){
+  if (argc == 1) {
     std::cout << "Graphite virtual machine v1.0" << std::endl;
     std::cout << "Author: Interfiber <webmaster@interfiber.dev>" << std::endl;
     std::cout << "Syntax: " << argv[0] << " FILE OPTIONS" << std::endl;
     std::cout << "Options: " << std::endl;
-    std::cout << "--virtual-machine-enable-debug-output  Enable debug output at the end of program execution" << std::endl;
+    std::cout << "--virtual-machine-enable-debug-output  Enable debug output "
+                 "at the end of program execution"
+              << std::endl;
     std::exit(-1);
   } else {
     virtualMachineBytecodeFile = std::string(argv[1]);

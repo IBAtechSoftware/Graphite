@@ -386,7 +386,15 @@ for line in _G["importedCodeString"]:gmatch("([^\n]*)\n?") do
             sectorName = split(paramsCombined, "::")[1]
         }
         
-        -- TODO: Insert vars into function
+        -- Generate buffers
+
+        for _, param in pairs(functionParams) do
+            -- Write Ahead Buffer allows writing into sector specific memory
+            local writeAheadBuffer = {
+                bufferSlot = bufferId + 1
+            }
+        end
+        
 
         sectorId = sectorId + 1
 

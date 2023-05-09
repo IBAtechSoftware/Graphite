@@ -53,21 +53,26 @@ struct VirtualMachineRegister {
 };
 
 enum VirtualMachineInstructionType {
-  BUFWRITE = 0,
-  REGWRITE = 1,
-  REGCPYTOBUF = 2,
-  BUFCPYTOREG = 3,
-  GOTOSECTOR = 4,
-  ADD = 5,
-  SUB = 6,
-  DIV = 7,
-  MUL = 8,
-  TMPBUFCPY = 9,
-  TMPBUFRM = 10
+  BUFWRITE = 0, // Buffer write
+  REGWRITE = 1, // Register write
+  REGCPYTOBUF = 2, // Register copy to buffer
+  BUFCPYTOREG = 3, // Buffer copy to register
+  GOTOSECTOR = 4, // Execute the given sector
+  ADD = 5, // Addition
+  SUB = 6, // Subtract
+  DIV = 7, // Divide
+  MUL = 8, // Multiply
+  TMPBUFCPY = 9, // Temporary buffer copy
+  TMPBUFRM = 10, // Temporary buffer remove
+  WABWRITE = 11, // Write ahead buffer write
+  WABRM = 12, // Write ahead buffer remove
 };
 
 struct VirtualMachineInstructionResult {
   bool gotoSector = false;
+  bool writeAheadToBuffer = false;
+  int writeAheadBufferId = -1;
+  std::string writeAheadBufferContent = "";
   int sectorId = -1;
 };
 
@@ -88,6 +93,7 @@ struct VirtualMachineInstruction {
 struct VirtualMachineSector {
   int sectorId;
   std::vector<VirtualMachineInstruction> instructions;
+  std::vector<VirtualMachineBuffer> writeAheadBuffers;
 
   void execute(std::vector<VirtualMachineRegister> *registers,
                std::vector<VirtualMachineBuffer> *buffers,
@@ -98,6 +104,12 @@ struct VirtualMachineSector {
 
       if (result.gotoSector) {
         sectors->at(result.sectorId).execute(registers, buffers, sectors, tmpBuffers);
+      } else if (result.writeAheadToBuffer){
+        VirtualMachineBuffer buffer{};
+        buffer.slot = result.writeAheadBufferId;
+        buffer.value = result.writeAheadBufferContent;
+
+        sectors->at(result.sectorId).writeAheadBuffers.push_back(buffer);
       }
     }
   }
