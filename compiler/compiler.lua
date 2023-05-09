@@ -24,9 +24,10 @@ table.insert(variables, {
     scope = "main" -- Function name
 })
 
+
 local function getVarByName(name, scope)
-    for _, var in pairs(variables) do
-        if var.name == name and var.scope == scope then
+    for _, var in pairs(sectors[sectorId].sectorWriteAheads) do
+        if var.bufferName == name then
             return var
         end
     end
@@ -71,7 +72,6 @@ end
 
 local function importStdEval(importFile)
     -- Loop over every line in imported file, find import statments, anmd
-    print("Importing standard library: " .. importFile)
     local standardLibraryFile = io.open("std/" .. importFile .. ".gr", "r")
 
     if standardLibraryFile == nil then
@@ -113,8 +113,6 @@ local function evalExpr(line)
         local c = line:sub(i, i)
 
         if isEscaped and tick == 3 then
-            print(c)
-            print("Not in escape mode :)")
             isEscaped = false
             tick = 0
         end
@@ -136,7 +134,8 @@ local function evalExpr(line)
             statementContent = ""
         elseif c == "$" and not isEscaped and isInStatment then
             local global = getGlobal(statementContent)
-            local scopeVar = getGlobal(statementContent)
+            local scopeVar = getVarByName(statementContent)
+
             -- Global variables take preference over scope variables
 
             if global == nil and scopeVar == nil then
@@ -147,7 +146,7 @@ local function evalExpr(line)
             if global ~= nil then
                 line = line:gsub("%$" .. statementContent .. "%$", global.content)
             else
-                line = line:gsub("%$" .. statementContent .. "%$", scopeVar.content)
+                line = line:gsub("%$" .. statementContent .. "%$", "$#"..scopeVar.bufferSlot.."$")
             end
 
             isInStatment = false
@@ -180,6 +179,7 @@ grFileCode = grFile:read("*all")
 
 sectors[0] = {
     sectorContent = {},
+    sectorWriteAheads = {},
     sectorId = 0,
     sectorName = "main"
 }
@@ -190,10 +190,7 @@ print("Evaluating imports to generate full code...")
 
 _G["importedCodeString"] = ""
 for line in grFileCode:gmatch("([^\n]*)\n?") do
-    print("Pre-processing line")
-
     if line == "" then
-        print("!!!! Not pre-processing empty line")
         goto continue
     end
 
@@ -211,18 +208,16 @@ for line in grFileCode:gmatch("([^\n]*)\n?") do
     ::continue::
 end
 
+print(_G["importedCodeString"])
+
 print("Generated full graphite code")
 print("Compiling into graphite machine code")
 for line in _G["importedCodeString"]:gmatch("([^\n]*)\n?") do
-    print("Parsing line")
-
     if line == "" then
-        print("!!!! Not parsing empty line")
         goto continue
     end
 
     if line:sub(1, 1) .. line:sub(2, 2) == "--" then
-        print("!!!! Ignoring line from parsing, detected comment")
         goto continue
     end
 
@@ -383,6 +378,7 @@ for line in _G["importedCodeString"]:gmatch("([^\n]*)\n?") do
         local sector = {
             sectorContent = {},
             sectorId = sectorId + 1,
+            sectorWriteAheads = {},
             sectorName = split(paramsCombined, "::")[1]
         }
         
@@ -392,8 +388,13 @@ for line in _G["importedCodeString"]:gmatch("([^\n]*)\n?") do
         for _, param in pairs(functionParams) do
             -- Write Ahead Buffer allows writing into sector specific memory
             local writeAheadBuffer = {
-                bufferSlot = writeAheadBufferId
+                bufferSlot = writeAheadBufferId,
+                bufferName = param,
+                bufferContent = ""
             }
+
+            table.insert(sector.sectorWriteAheads, writeAheadBuffer)
+            table.insert(sector.sectorContent, "WABCPYTOBUF-"..writeAheadBuffer.bufferSlot..","..writeAheadBuffer.bufferSlot)
 
             writeAheadBufferId = writeAheadBufferId + 1
         end
@@ -405,13 +406,29 @@ for line in _G["importedCodeString"]:gmatch("([^\n]*)\n?") do
 
         -- print(paramsCombined)
     elseif lineSplit[1] == "endfunction" then
+        -- Delete the arguments from memory
+
+        for _, param in pairs(sectors[sectorId].sectorWriteAheads) do
+            table.insert(sectors[sectorId].sectorContent, "BUFRM-"..param.bufferSlot)
+        end
+
         sectorId = sectorId - 1
     else
         -- Find function by name
-        -- print(lineSplit[1])
         local func = getFunctionByName(lineSplit[1])
         
         if func ~= nil then
+            table.remove(lineSplit, 1)
+            
+            local paramsCombined = table.concat(lineSplit, " ")
+            local functionParams = split(paramsCombined, ",")
+
+            -- Insert write aheads
+            for _, wab in pairs(func.sectorWriteAheads) do
+                table.insert(sectors[sectorId].sectorContent, "WABWRITE-"..func.sectorId..","..bufferId..","..functionParams[wab.bufferSlot + 1])
+                bufferId = bufferId + 1
+            end
+
             table.insert(sectors[sectorId].sectorContent, "GOTOSECTOR-"..func.sectorId)
         end
     end
@@ -421,8 +438,6 @@ end
 
 print("Assemblying sectors...")
 local fullCode = ""
-
-print(serpent.line(sectors))
 
 for i=0,#sectors,1 do
     local sector = sectors[i]

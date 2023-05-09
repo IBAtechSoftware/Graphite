@@ -1,8 +1,9 @@
 #-#
-WABWRITE-1,0,Hello World
+WABWRITE-1,0,Hello World!
 GOTOSECTOR-1
 #-#
 #-#
 WABCPYTOBUF-0,0
 REGWRITE-0,$#0$
+BUFRM-0
 #-#

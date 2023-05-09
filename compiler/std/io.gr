@@ -2,7 +2,6 @@
 
 (function print::[message])
 
--- TODO: Change to $message$
-(registerWrite 0, $GRAPHITE_VERSION$)
+(registerWrite 0, $message$)
 
 (endfunction)
