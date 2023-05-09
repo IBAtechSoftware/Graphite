@@ -1,5 +1,8 @@
+(importStd globals)
+
 (function print::[message])
 
-(regwrite 0 $message)
+-- TODO: Change to $message$
+(registerWrite 0, $GRAPHITE_VERSION$)
 
 (endfunction)
