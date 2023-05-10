@@ -1,5 +1,3 @@
-(importStd globals)
-
 (function print::[message])
 
 (registerWrite 0, $message$)

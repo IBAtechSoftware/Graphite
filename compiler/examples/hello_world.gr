@@ -1,3 +1,9 @@
 (importStd io)
 
-(print Hello World!)
+(function helloWorld::[num1])
+
+(print Hello world!)
+
+(endfunction)
+
+(helloWorld 1)

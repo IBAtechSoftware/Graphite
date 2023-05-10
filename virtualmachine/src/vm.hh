@@ -67,6 +67,7 @@ enum VirtualMachineInstructionType {
   WABWRITE = 11, // Write ahead buffer write
   WABRM = 12, // Write ahead buffer remove
   WABCPYTOBUF = 13, // Write ahead buffer copy to program memory
+  BUFRM = 14 // Remove a buffer from program memory
 };
 
 struct VirtualMachineInstructionResult {
@@ -116,6 +117,10 @@ struct VirtualMachineSector {
         sectors->at(result.sectorId).writeAheadBuffers.push_back(buffer);
       } else if (result.writeAheadBufferCopy) {
         VirtualMachineBuffer writeAheadBuffer = sectors->at(sectorId).writeAheadBuffers.at(result.writeAheadBufferId);
+
+        if (result.writeAheadBufferCopyId == -1){
+          result.writeAheadBufferCopyId = sectors->at(sectorId).writeAheadBuffers.size() + 1;
+        }
 
         VirtualMachineBuffer copyBuffer{};
         copyBuffer.slot = result.writeAheadBufferCopyId;

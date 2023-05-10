@@ -144,12 +144,32 @@ VirtualMachineInstructionResult VirtualMachineInstruction::execute(
 
     return result;
   } else if (op == WABCPYTOBUF){
+
+    int bufferCopyId = 0;
+
+    if (params[1] == "_new_") {
+      bufferCopyId = -1;
+    } else {
+      bufferCopyId = std::stoi(params[1]);
+    }
+
     VirtualMachineInstructionResult result{};
     result.writeAheadBufferCopy = true;
     result.writeAheadBufferId = std::stoi(params[0]);
-    result.writeAheadBufferCopyId = std::stoi(params[1]);
+    result.writeAheadBufferCopyId = bufferCopyId;
 
     return result; 
+  } else if (op == BUFRM){
+    int slot = std::stoi(params[0]);
+
+    for (int i = 0; i < buffers->size(); i++){
+      VirtualMachineBuffer buffer = buffers->at(i);
+
+      if (buffer.slot == slot){
+        buffers->erase(buffers->begin()+buffer.slot);
+        break;
+      }
+    }
   }
 
   VirtualMachineInstructionResult result{};
@@ -187,6 +207,8 @@ VirtualMachineInstructionType instructionNameToType(std::string name) {
     return WABRM;
   } else if (name == "WABCPYTOBUF") {
     return WABCPYTOBUF;
+  } else if (name == "BUFRM") {
+    return BUFRM;
   } else {
     throw std::runtime_error("Invalid instruction name: " + name);
   }
